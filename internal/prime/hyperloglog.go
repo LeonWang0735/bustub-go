@@ -3,6 +3,7 @@ package prime
 import (
 	"bustub-go/types"
 	"bustub-go/utils"
+	"fmt"
 	"math"
 	"sync"
 )
@@ -20,7 +21,7 @@ type HyperLogLog[T any] struct {
 }
 
 func NewHyperLogLog[T any](nBits int16) *HyperLogLog[T] {
-	if nBits < 0 || nBits > BITSET_CAPACITY {
+	if nBits < 0 || nBits >= BITSET_CAPACITY {
 		return nil
 	}
 	bucketsSize := uint64(1) << nBits
@@ -44,7 +45,9 @@ func (h *HyperLogLog[T]) CalculateHash(val T) (utils.HashT, error) {
 	case string:
 		valObj = types.NewVarcharValue(v)
 	}
-
+	if valObj == nil {
+		return 0, fmt.Errorf("failed to create types.Value for type %T, valObj is nil", val)
+	}
 	return utils.HashValue(valObj)
 }
 
@@ -103,6 +106,8 @@ func (h *HyperLogLog[T]) ComputeCardinality() {
 	if h.nBits < 0 {
 		return
 	}
+	h.bucketsMutex.Lock()
+	defer h.bucketsMutex.Unlock()
 	sum := 0.0
 	for _, r := range h.buckets {
 		sum += 1.0 / math.Pow(2, float64(r))
