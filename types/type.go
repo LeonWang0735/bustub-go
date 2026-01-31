@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/binary"
 	"strconv"
 )
 
@@ -38,7 +39,9 @@ func (t *IntType) GetData(value *Value) []byte {
 	switch t.typeId {
 	// TODO implement more type e.g SMALLINT TINYINT ...
 	case BIGINT:
-		return []byte{byte(value.val.bigint)}
+		buf := make([]byte, 8)
+		binary.LittleEndian.PutUint64(buf, uint64(value.val.bigint))
+		return buf
 	default:
 		return nil
 	}
